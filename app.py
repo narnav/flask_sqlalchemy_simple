@@ -21,19 +21,19 @@ def create_item():
     new_item = Item(name=data['name'], description=data['description'])
     db.session.add(new_item)
     db.session.commit()
-    return jsonify({'message': 'Item created'})
+    return ({"desc":new_item.description,"sName":new_item.name})
+
 @app.route('/item', methods=['GET'])
 @app.route('/item/<int:item_id>', methods=['GET'])
 def read_item(item_id=-1):
     if (item_id>-1):
         item = Item.query.get(item_id)
-        return jsonify({'name': item.name, 'description': item.description})
+        return jsonify({'name': item.name, 'description': item.description,"id":item.id})
     else:
         ar=[]
         for item in Item.query.all():
-            ar.append({'name': item.name, 'description': item.description})
+            ar.append({'name': item.name, 'description': item.description,"id":item.id})
         return(json.dumps( ar))
-    
 
 @app.route('/item/<int:item_id>', methods=['PUT'])
 def update_item(item_id):
@@ -49,7 +49,7 @@ def delete_item(item_id):
     item = Item.query.get(item_id)
     db.session.delete(item)
     db.session.commit()
-    return jsonify({'message': 'Item deleted'})
+    return jsonify({'message': item_id})
 
 if __name__ == '__main__':
     with app.app_context():
