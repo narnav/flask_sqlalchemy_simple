@@ -1,52 +1,57 @@
 import json
-from flask import Flask, request, flash, url_for, redirect, render_template
+from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
- 
+from flask_cors import CORS
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///students.sqlite3'
-app.config['SECRET_KEY'] = "random string"
- 
+CORS(app)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///example.db'
 db = SQLAlchemy(app)
- 
-# model
-class students(db.Model):
-    id = db.Column('student_id', db.Integer, primary_key = True)
-    name = db.Column(db.String(100))
-    city = db.Column(db.String(50))
-    addr = db.Column(db.String(200))
-    pin = db.Column(db.String(10))
- 
-    def __init__(self, name, city, addr,pin):
-        self.name = name
-        self.city = city
-        self.addr = addr
-        self.pin = pin
-# model
- 
-# views
-@app.route('/')
-def show_all():
-    res=[]
-    for student in students.query.all():
-        res.append({"addr":student.addr,"city":student.city,"id":student.id,"name":student.name,"pin":student.pin})
-    return  (json.dumps(res))
-   
- 
-@app.route('/new', methods = ['GET', 'POST'])
-def new():
-    request_data = request.get_json()
-    # print(request_data['city'])
-    city = request_data['city']
-    name= request_data["name"]
-    addr= request_data["addr"]
-    pin= request_data["pin"]
- 
-    newStudent= students(name,city,addr,pin)
-    db.session.add (newStudent)
+
+class Item(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), unique=True, nullable=False)
+    description = db.Column(db.String(120), nullable=False)
+
+    def __repr__(self):
+        return '<Item %r>' % self.name
+
+@app.route('/item', methods=['POST'])
+def create_item():
+    data = request.get_json()
+    new_item = Item(name=data['name'], description=data['description'])
+    db.session.add(new_item)
     db.session.commit()
-    return "a new rcord was create"
- 
+    return jsonify({'message': 'Item created'})
+@app.route('/item', methods=['GET'])
+@app.route('/item/<int:item_id>', methods=['GET'])
+def read_item(item_id=-1):
+    if (item_id>-1):
+        item = Item.query.get(item_id)
+        return jsonify({'name': item.name, 'description': item.description})
+    else:
+        ar=[]
+        for item in Item.query.all():
+            ar.append({'name': item.name, 'description': item.description})
+        return(json.dumps( ar))
+    
+
+@app.route('/item/<int:item_id>', methods=['PUT'])
+def update_item(item_id):
+    data = request.get_json()
+    item = Item.query.get(item_id)
+    item.name = data['name']
+    item.description = data['description']
+    db.session.commit()
+    return jsonify({'message': 'Item updated'})
+
+@app.route('/item/<int:item_id>', methods=['DELETE'])
+def delete_item(item_id):
+    item = Item.query.get(item_id)
+    db.session.delete(item)
+    db.session.commit()
+    return jsonify({'message': 'Item deleted'})
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug = True)
+        app.run(debug=True)
