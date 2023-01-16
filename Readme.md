@@ -1,15 +1,15 @@
-## this is very good flask template
-# contains:
-    # sqlalchemy
-    # CORS
+# Very good flask template
+## contains:
+### sqlalchemy
+### CORS
 
 
-    # update DB create 
+# Update DB create 
     with app.app_context():
         db.create_all()
         app.run(debug=True)
 
-# run:
+# Run:
     create a virtual enviroment
     pip install -r .\requirements.txt
     flask run
